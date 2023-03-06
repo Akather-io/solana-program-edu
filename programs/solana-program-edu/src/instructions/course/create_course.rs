@@ -5,8 +5,8 @@ use anchor_lang::prelude::*;
 #[instruction(id: u64)]
 pub struct CreateCourse<'info> {
     #[account(
-        init,
-        seeds = [COURSE_SEED.as_ref(), id.to_le_bytes().as_ref()],
+        init_if_needed,
+        seeds = [COURSE_SEED.as_ref(), id.to_le_bytes().as_ref(), payer.key.as_ref()],
         bump ,
         payer = payer,
         space = Course::LEN
@@ -23,7 +23,6 @@ pub fn handler(
     name: String,
     description: String,
     instructor: Pubkey,
-    created_at: i64,
 ) -> Result<()> {
     let course = &mut ctx.accounts.course;
     course.creator = *ctx.accounts.payer.key;
@@ -31,6 +30,6 @@ pub fn handler(
     course.name = name;
     course.description = description;
     course.instructor = instructor;
-    course.created_at = created_at;
+    course.created_at = Clock::get()?.unix_timestamp;
     Ok(())
 }

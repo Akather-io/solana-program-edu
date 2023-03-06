@@ -22,15 +22,7 @@ pub mod solana_program_edu {
         name: String,
         description: String,
         instructor: Pubkey,
-        created_at: i64,
     ) -> Result<()> {
-        instructions::course::create_course::handler(
-            ctx,
-            id,
-            name,
-            description,
-            instructor,
-            created_at,
-        )
+        instructions::course::create_course::handler(ctx, id, name, description, instructor)
     }
 }
