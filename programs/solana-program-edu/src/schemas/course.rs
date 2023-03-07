@@ -10,6 +10,7 @@ pub struct Course {
     pub description: String,
     pub instructor: Pubkey,
     pub created_at: i64,
+    pub price: u64,
 }
 
 impl Course {
@@ -21,5 +22,6 @@ impl Course {
         + STRING_LENGTH_PREFIX
         + MAX_COURSE_DESCRIPTION_LENGTH
         + PUBLIC_KEY_LENGTH
-        + TIMESTAMP_LENGTH;
+        + TIMESTAMP_LENGTH
+        + U64_SIZE;
 }
