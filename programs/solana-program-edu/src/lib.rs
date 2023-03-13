@@ -40,7 +40,7 @@ pub mod solana_program_edu {
         )
     }
 
-    pub fn enroll(ctx: Context<CourseEnroll>, course_id: u64) -> Result<()> {
-        instructions::course::enroll::handler(ctx, course_id)
+    pub fn enroll(ctx: Context<CourseEnroll>) -> Result<()> {
+        instructions::course::enroll::handler(ctx)
     }
 }
