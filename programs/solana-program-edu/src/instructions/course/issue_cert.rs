@@ -1,40 +1,29 @@
-use crate::constants::*;
-use crate::errors::ErrorMessages;
-use crate::{Course, Enrollment};
-use anchor_lang::solana_program::program::invoke;
-use anchor_lang::{prelude::*, system_program};
+use anchor_lang::{prelude::*, solana_program::program::invoke};
 use anchor_spl::{associated_token, token};
 use mpl_token_metadata::{instruction, ID as METADATA_PROGRAM_ID};
 
+use crate::{errors::ErrorMessages, Course, Enrollment, CERT_SEED};
+
 #[derive(Accounts)]
-pub struct CourseEnroll<'info> {
+pub struct IssueCert<'info> {
     #[account(mut)]
     pub course: Account<'info, Course>,
-    #[account(
-        init_if_needed,
-        seeds = [ENROLLMENT_SEED.as_ref(), course.key().as_ref(), authority.key().as_ref()],
-        bump,
-        payer = authority,
-        space = Enrollment::LEN
-    )]
+    #[account(mut)]
     pub enrollment: Account<'info, Enrollment>,
-    #[account(mut,seeds = [TREASURER_SEED.as_ref(), course.key().as_ref(), course.creator.as_ref()], bump)]
-    /// CHECK: Just a pure account
-    pub treasurer: AccountInfo<'info>,
     #[account(
         init_if_needed,
-        seeds = [CARD_SEED.as_ref(), course.key().as_ref(), authority.key().as_ref()],
+        seeds = [CERT_SEED.as_ref(), course.key().as_ref(), enrollment.key().as_ref()],
         bump,
         payer = authority,
         mint::decimals = 0,
         mint::authority = authority,
         mint::freeze_authority = authority
     )]
-    pub card: Account<'info, token::Mint>,
+    pub certificate: Account<'info, token::Mint>,
     #[account(
         init_if_needed,
         payer = authority,
-        associated_token::mint = card,
+        associated_token::mint = certificate,
         associated_token::authority = authority,
     )]
     pub token_account: Account<'info, token::TokenAccount>,
@@ -55,40 +44,28 @@ pub struct CourseEnroll<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(ctx: Context<CourseEnroll>) -> Result<()> {
-    let course = &ctx.accounts.course;
+pub fn handler(ctx: Context<IssueCert>, uri: String) -> Result<()> {
     let enrollment = &mut ctx.accounts.enrollment;
+    let course = &mut ctx.accounts.course;
 
-    let user_balance = ctx.accounts.authority.to_account_info().lamports();
     require!(
-        user_balance.gt(&course.price),
-        ErrorMessages::NotEnoughFunds
+        !enrollment.completion_date.is_none(),
+        ErrorMessages::EnrollmentNotCompleted
     );
 
-    enrollment.student = *ctx.accounts.authority.key;
-    enrollment.course = *course.to_account_info().key;
-    enrollment.start_date = Clock::get()?.unix_timestamp;
-    // enrollment.completion_date = 0;
-
-    msg!("Transferring funds to treasurer");
-    let cpi_context = CpiContext::new(
-        ctx.accounts.system_program.to_account_info(),
-        system_program::Transfer {
-            from: ctx.accounts.authority.to_account_info(),
-            to: ctx.accounts.treasurer.to_account_info(),
-        },
+    require!(
+        enrollment.issued_at.is_none(),
+        ErrorMessages::CertificateAlreadyIssued
     );
-    system_program::transfer(cpi_context, course.price)?;
+
     msg!(
-        "Funds transferred to treasurer: {}",
-        &ctx.accounts.treasurer.key()
+        "Mint: {}",
+        &ctx.accounts.certificate.to_account_info().key()
     );
-
-    msg!("Mint: {}", &ctx.accounts.card.to_account_info().key());
     msg!("Token Address: {}", &ctx.accounts.token_account.key());
 
     let cpi_accounts = token::MintTo {
-        mint: ctx.accounts.card.to_account_info(),
+        mint: ctx.accounts.certificate.to_account_info(),
         to: ctx.accounts.token_account.to_account_info(),
         authority: ctx.accounts.authority.to_account_info(),
     };
@@ -106,7 +83,7 @@ pub fn handler(ctx: Context<CourseEnroll>) -> Result<()> {
 
     let account_info = vec![
         ctx.accounts.metadata.to_account_info(),
-        ctx.accounts.card.to_account_info(),
+        ctx.accounts.certificate.to_account_info(),
         ctx.accounts.authority.to_account_info(),
         ctx.accounts.authority.to_account_info(),
         ctx.accounts.authority.to_account_info(),
@@ -132,13 +109,13 @@ pub fn handler(ctx: Context<CourseEnroll>) -> Result<()> {
         &instruction::create_metadata_accounts_v3(
             METADATA_PROGRAM_ID,
             ctx.accounts.metadata.key(),
-            ctx.accounts.card.key(),
+            ctx.accounts.certificate.key(),
             ctx.accounts.authority.key(),
             ctx.accounts.authority.key(),
             ctx.accounts.authority.key(),
             course.name.clone(),
             course.symbol.clone(),
-            course.uri.clone(),
+            uri,
             Some(creator),
             1,
             true,
@@ -152,7 +129,7 @@ pub fn handler(ctx: Context<CourseEnroll>) -> Result<()> {
     msg!("Metadata Account Created !!!");
     let master_edition_infos = vec![
         ctx.accounts.master_edition.to_account_info(),
-        ctx.accounts.card.to_account_info(),
+        ctx.accounts.certificate.to_account_info(),
         ctx.accounts.authority.to_account_info(),
         ctx.accounts.authority.to_account_info(),
         ctx.accounts.metadata.to_account_info(),
@@ -166,7 +143,7 @@ pub fn handler(ctx: Context<CourseEnroll>) -> Result<()> {
         &instruction::create_master_edition_v3(
             METADATA_PROGRAM_ID,
             ctx.accounts.master_edition.key(),
-            ctx.accounts.card.key(),
+            ctx.accounts.certificate.key(),
             ctx.accounts.authority.key(),
             ctx.accounts.authority.key(),
             ctx.accounts.metadata.key(),

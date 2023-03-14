@@ -43,4 +43,12 @@ pub mod solana_program_edu {
     pub fn enroll(ctx: Context<CourseEnroll>) -> Result<()> {
         instructions::course::enroll::handler(ctx)
     }
+
+    pub fn update_student(ctx: Context<UpdateStudent>) -> Result<()> {
+        instructions::course::update_student::handler(ctx)
+    }
+
+    pub fn issue_cert(ctx: Context<IssueCert>, uri: String) -> Result<()> {
+        instructions::course::issue_cert::handler(ctx, uri)
+    }
 }

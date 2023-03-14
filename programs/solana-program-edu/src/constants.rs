@@ -18,3 +18,5 @@ pub const MAX_URI_LENGTH: usize = 100 * 4;
 pub const COURSE_SEED: &[u8] = b"course";
 pub const ENROLLMENT_SEED: &[u8] = b"enrollment";
 pub const CARD_SEED: &[u8] = b"card";
+pub const TREASURER_SEED: &[u8] = b"treasurer";
+pub const CERT_SEED: &[u8] = b"cert";
