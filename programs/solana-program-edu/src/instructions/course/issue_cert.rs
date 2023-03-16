@@ -58,6 +58,8 @@ pub fn handler(ctx: Context<IssueCert>, uri: String) -> Result<()> {
         ErrorMessages::CertificateAlreadyIssued
     );
 
+    enrollment.issued_at = Some(Clock::get()?.unix_timestamp);
+
     msg!(
         "Mint: {}",
         &ctx.accounts.certificate.to_account_info().key()
