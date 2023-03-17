@@ -49,16 +49,20 @@ pub fn handler(ctx: Context<IssueCert>, uri: String) -> Result<()> {
     let course = &mut ctx.accounts.course;
 
     require!(
-        !enrollment.completion_date.is_none(),
+        !enrollment.completion_date.eq(&0),
         ErrorMessages::EnrollmentNotCompleted
     );
 
     require!(
-        enrollment.issued_at.is_none(),
+        enrollment.issued_at.eq(&0),
         ErrorMessages::CertificateAlreadyIssued
     );
 
-    enrollment.issued_at = Some(Clock::get()?.unix_timestamp);
+    enrollment.issued_at = Clock::get()?.unix_timestamp;
+    msg!(
+        "Enrollment marked as completed and certificate issued at {}",
+        enrollment.issued_at
+    );
 
     msg!(
         "Mint: {}",
@@ -117,7 +121,7 @@ pub fn handler(ctx: Context<IssueCert>, uri: String) -> Result<()> {
             ctx.accounts.authority.key(),
             course.name.clone(),
             course.symbol.clone(),
-            uri,
+            uri.clone(),
             Some(creator),
             1,
             true,

@@ -68,6 +68,8 @@ pub fn handler(ctx: Context<CourseEnroll>) -> Result<()> {
     enrollment.student = *ctx.accounts.authority.key;
     enrollment.course = *course.to_account_info().key;
     enrollment.start_date = Clock::get()?.unix_timestamp;
+    enrollment.completion_date = 0;
+    enrollment.issued_at = 0;
     // enrollment.completion_date = 0;
 
     msg!("Transferring funds to treasurer");

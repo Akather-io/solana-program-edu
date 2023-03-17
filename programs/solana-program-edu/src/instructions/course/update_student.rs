@@ -23,7 +23,7 @@ pub fn handler(ctx: Context<UpdateStudent>) -> Result<()> {
         ErrorMessages::Unauthorized
     );
 
-    enrollment.completion_date = Some(Clock::get()?.unix_timestamp);
+    enrollment.completion_date = Clock::get()?.unix_timestamp;
     msg!("Student completion date updated");
 
     Ok(())

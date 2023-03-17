@@ -7,8 +7,8 @@ pub struct Enrollment {
     pub course: Pubkey,
     pub student: Pubkey,
     pub start_date: i64,
-    pub completion_date: Option<i64>,
-    pub issued_at: Option<i64>,
+    pub completion_date: i64,
+    pub issued_at: i64,
 }
 
 impl Enrollment {

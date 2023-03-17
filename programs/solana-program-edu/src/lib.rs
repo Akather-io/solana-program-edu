@@ -11,7 +11,7 @@ pub use schemas::*;
 
 pub mod errors;
 
-declare_id!("2qFu7vVAqBQLNu4QchkeprJUBRzmVVF6v2ESv48tJkFL");
+declare_id!("E9TFDbmFeVLGFv6orR4wjtWgkrMwcYXkUeBPiS5UYxmz");
 
 #[program]
 pub mod solana_program_edu {
